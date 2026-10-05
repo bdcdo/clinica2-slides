@@ -4,10 +4,54 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clínica II: modelos de linguagem</title>
-<meta http-equiv="refresh" content="0; url=ver.html?deck=aula-llm.pdf#1">
-<style>body { font-family: Arial, sans-serif; margin: 3rem; color: #1a1a1a; background: #fff; }</style>
+<style>
+:root { --fundo: #ffffff; --texto: #1a1a1a; --suave: #555555; --link: #0b5cad; --linha: #d6d6d6; --realce: #f3f3f3; }
+@media (prefers-color-scheme: dark) {
+  :root { --fundo: #161616; --texto: #ececec; --suave: #b0b0b0; --link: #7cb8ff; --linha: #3a3a3a; --realce: #222222; }
+}
+body { font-family: Arial, Helvetica, sans-serif; background: var(--fundo); color: var(--texto); margin: 0; line-height: 1.5; }
+main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+h1 { font-size: 1.9rem; margin: 0 0 0.3rem; }
+h2 { font-size: 1.25rem; margin: 2.2rem 0 0.6rem; }
+p { margin: 0.5rem 0; }
+.subtitulo { color: var(--suave); margin-bottom: 1.5rem; }
+a { color: var(--link); }
+.botao { display: inline-block; padding: 0.55rem 1rem; border: 2px solid var(--link); border-radius: 6px; font-weight: bold; text-decoration: none; margin: 0.3rem 0.5rem 0.3rem 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--linha); vertical-align: top; }
+th { background: var(--realce); }
+ol { padding-left: 1.3rem; }
+li { margin: 0.35rem 0; }
+code { background: var(--realce); padding: 0.05rem 0.3rem; border-radius: 3px; }
+</style>
 </head>
 <body>
-<p><a href="ver.html?deck=aula-llm.pdf#1">Abrir os slides da aula de modelos de linguagem</a> · <a href="aula-llm.pdf">baixar o PDF</a></p>
+<main>
+<h1>Clínica II: modelos de linguagem</h1>
+<p class="subtitulo">Como transformar o texto de milhares de sentenças em colunas de uma tabela, com um modelo de linguagem.</p>
+
+<h2>Slides</h2>
+<a class="botao" href="ver.html?deck=aula-llm.pdf#1">Abrir os slides</a>
+<a class="botao" href="aula-llm.pdf">Baixar o PDF</a>
+<p>Nos slides, as setas do teclado avançam e voltam, inclusive nas animações.</p>
+
+<h2>Notebooks</h2>
+<table>
+<thead><tr><th>Notebook</th><th>Material</th></tr></thead>
+<tbody>
+<tr><td>Aula, para preencher junto</td><td><a href="https://colab.research.google.com/github/bdcdo/clinica2-slides/blob/main/notebooks/aula-llm-sala-em-branco.ipynb"><strong>abrir no Colab</strong></a> · <a href="https://github.com/bdcdo/clinica2-slides/blob/main/notebooks/aula-llm-sala-em-branco.ipynb">ver ou baixar</a></td></tr>
+<tr><td>Aula, preenchido</td><td><a href="https://colab.research.google.com/github/bdcdo/clinica2-slides/blob/main/notebooks/aula-llm-sala.ipynb"><strong>abrir no Colab</strong></a> · <a href="https://github.com/bdcdo/clinica2-slides/blob/main/notebooks/aula-llm-sala.ipynb">ver ou baixar</a></td></tr>
+<tr><td>Exercícios de estudo</td><td><a href="https://colab.research.google.com/github/bdcdo/clinica2-slides/blob/main/notebooks/aula-llm-exercicios.ipynb"><strong>abrir no Colab</strong></a> · <a href="https://github.com/bdcdo/clinica2-slides/blob/main/notebooks/aula-llm-exercicios.ipynb">ver ou baixar</a></td></tr>
+</tbody>
+</table>
+
+<h2>Como rodar no Colab</h2>
+<ol>
+<li>Clique em <strong>abrir no Colab</strong>. Assim que abrir, use <code>Arquivo</code> e depois <code>Salvar uma cópia no Drive</code>, senão o que você escrever se perde ao fechar a aba.</li>
+<li>Crie uma conta gratuita em <a href="https://console.groq.com">console.groq.com</a> e gere uma chave em "API Keys". Não precisa de cartão.</li>
+<li>No Colab, clique no ícone de chave na barra lateral ("Secrets"), crie o segredo <code>GROQ_API_KEY</code> com a sua chave e ligue o acesso do notebook. Não cole a chave numa célula.</li>
+<li>Baixe a base de exemplo, <code>dataset_clinica_20261.csv</code>, pelo link que o professor enviar, abra o painel "Arquivos" (o ícone de pasta na barra lateral) e arraste o arquivo para lá. O arquivo some quando a sessão termina.</li>
+</ol>
+</main>
 </body>
 </html>
