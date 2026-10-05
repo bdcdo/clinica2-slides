@@ -761,5 +761,29 @@ function preparar(id) {
 
 iniciar({animacao, cenarios: cenarios.map((c) => c.id), rotulos: cenarios.map((c) => c.rotulo), preparar, espera: (s) => s.dur});
 </script>
+<!-- modo embutido do site da aula -->
+<style>
+html.embutido, html.embutido body, html.embutido #palco { background: #fff; }
+html.embutido #cabeca, html.embutido #controles, html.embutido #narracao { display: none !important; }
+</style>
+<script>
+(() => {
+  if (!new URLSearchParams(location.search).has("embutido")) return;
+  document.documentElement.classList.add("embutido");
+  // Registrado depois do ajuste original, roda por último e prevalece sobre ele.
+  const [topo, altura] = [50, 560];
+  function ajustarEmbutido() {
+    const moldura = document.getElementById("moldura");
+    if (!moldura) return;
+    const escala = Math.min(innerWidth / 1280, innerHeight / altura);
+    moldura.style.transform = `scale(${escala})`;
+    moldura.style.left = (innerWidth - 1280 * escala) / 2 + "px";
+    moldura.style.top = (innerHeight - altura * escala) / 2 - topo * escala + "px";
+  }
+  addEventListener("resize", ajustarEmbutido);
+  addEventListener("load", ajustarEmbutido);
+  ajustarEmbutido();
+})();
+</script>
 </body>
 </html>
