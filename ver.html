@@ -71,9 +71,13 @@ function medida(pagina) {
   return {largura: base.width * escala, altura: base.height * escala, escala};
 }
 
+// Cada chamada de mostrar recebe um número; a que foi ultrapassada por outra enquanto lia a página para.
+let geracao = 0;
 async function mostrar(n, voltando = false) {
   atual = Math.max(1, Math.min(pdf.numPages, n));
+  const vez = ++geracao;
   const {pagina, animacao, texto} = await ler(atual);
+  if (vez !== geracao) return;
   const {largura, altura, escala} = medida(pagina);
   const caixa = $("pagina");
   caixa.style.width = largura + "px"; caixa.style.height = altura + "px";
@@ -90,23 +94,24 @@ async function mostrar(n, voltando = false) {
     caixa.appendChild(canvas);
     ultimaRenderizacao?.cancel();
     ultimaRenderizacao = pagina.render({canvas, canvasContext: canvas.getContext("2d"), viewport});
-    try { await ultimaRenderizacao.promise; } catch (e) { if (e?.name !== "RenderingCancelledException") throw e; }
-  }
-  if (animacao) {
-    // A animação ocupa só a área de conteúdo do slide, com as margens da página de animação do
-    // template Insper (2,97 cm à esquerda, 2,91 à direita, 5,4 no topo e 2,0 embaixo, numa página
-    // de 33,867 por 19,05 cm), e abre em modo embutido, sem título, botões nem narração próprios.
-    const endereco = new URL(animacao);
-    endereco.searchParams.set("embutido", "1");
-    const quadro = document.createElement("iframe");
-    quadro.src = endereco.href; quadro.title = "Animação do slide " + atual; quadro.tabIndex = -1;
-    Object.assign(quadro.style, {inset: "auto", left: (2.97 / 33.867 * 100) + "%", top: (5.4 / 19.05 * 100) + "%",
-      width: ((33.867 - 2.97 - 2.91) / 33.867 * 100) + "%", height: ((19.05 - 5.4 - 2.0) / 19.05 * 100) + "%"});
-    // A calculadora tem campos para preencher; as outras animações só recebem teclas.
-    if (/animacao-amostragem/.test(animacao)) quadro.style.pointerEvents = "auto";
-    // Quem chega voltando da página seguinte encontra a animação no último passo.
-    if (voltando) quadro.addEventListener("load", () => quadro.contentWindow.postMessage({tipo: "tecla", key: "End"}, "*"), {once: true});
-    caixa.appendChild(quadro);
+    // A animação entra antes de esperar o desenho: uma tecla apertada durante o desenho já a encontra.
+    if (animacao) {
+      // A animação ocupa só a área de conteúdo do slide, com as margens da página de animação do
+      // template Insper (2,97 cm à esquerda, 2,91 à direita, 5,4 no topo e 2,0 embaixo, numa página
+      // de 33,867 por 19,05 cm), e abre em modo embutido, sem título, botões nem narração próprios.
+      const endereco = new URL(animacao);
+      endereco.searchParams.set("embutido", "1");
+      const quadro = document.createElement("iframe");
+      quadro.src = endereco.href; quadro.title = "Animação do slide " + atual; quadro.tabIndex = -1;
+      Object.assign(quadro.style, {inset: "auto", left: (2.97 / 33.867 * 100) + "%", top: (5.4 / 19.05 * 100) + "%",
+        width: ((33.867 - 2.97 - 2.91) / 33.867 * 100) + "%", height: ((19.05 - 5.4 - 2.0) / 19.05 * 100) + "%"});
+      // A calculadora tem campos para preencher; as outras animações só recebem teclas.
+      if (/animacao-amostragem/.test(animacao)) quadro.style.pointerEvents = "auto";
+      // Quem chega voltando da página seguinte encontra a animação no último passo.
+      if (voltando) quadro.addEventListener("load", () => quadro.contentWindow.postMessage({tipo: "tecla", key: "End"}, "*"), {once: true});
+      caixa.appendChild(quadro);
+    }
+    try { await ultimaRenderizacao.promise; } catch (e) { if (e?.name !== "RenderingCancelledException") throw e; return; }
   }
   $("numero").textContent = `${atual} / ${pdf.numPages}`;
   $("anterior").disabled = atual === 1; $("proximo").disabled = atual === pdf.numPages;
