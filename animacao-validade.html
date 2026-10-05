@@ -52,6 +52,21 @@ html, body { margin: 0; height: 100%; background: #26282c; font-family: system-u
 #setas svg { position: absolute; inset: 0; overflow: visible; }
 .cartao-voo { position: absolute; font: 15px var(--mono); background: var(--fundo); color: var(--texto); border: 2px solid var(--borda);
   border-radius: 3px; padding: 2px 5px; overflow-wrap: anywhere; box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+
+/* Modo embutido (comum.js, MODO_EMBUTIDO): o visualizador de slides desenha título, seção e moldura
+   do slide e põe a animação só na área de conteúdo. A página esconde a própria interface e fica só o
+   palco, recortado aos painéis, em fundo branco e com a fonte de corpo do template dos slides
+   (insper.typ: Inter, depois Arial e análogas; o código continua em DejaVu Sans Mono, que é a do
+   template também). A fonte não vai embutida no arquivo: sem Inter instalada, vale a próxima da lista. */
+:root { --sans: system-ui, sans-serif; }
+html.embutido { --sans: Inter, Arial, Arimo, "Liberation Sans", Lato, sans-serif; }
+html.embutido, html.embutido body { background: #fff; font-family: var(--sans); }
+html.embutido #cabeca, html.embutido #narracao, html.embutido #controles { display: none; }
+/* Palco recortado (comum.js, ajustar): o palco passa da janela, e o documento não pode rolar até lá,
+   nem pelo fragmento do cenário, que às vezes é também o id de um elemento (#ambiente). O body corta
+   com clip, que não abre área de rolagem, e é o bloco de contenção da moldura (absoluta), para cortá-la
+   também; no html, clip valeria como hidden, que rola por âncora. */
+html.recortado body { position: relative; overflow: clip; }
 </style>
 <style>
 :root { --terminal: #1e1f22; --terminal-texto: #e8e8e8; --terminal-apoio: #c4c7cc; --erro: #b3261e; --erro-tinta: #fbe4e2;
@@ -79,12 +94,12 @@ html, body { margin: 0; height: 100%; background: #26282c; font-family: system-u
 #grade { position: relative; }
 .ficha { position: absolute; width: 70px; height: 36px; background: var(--fundo); border: 2px solid #8a8a8a; border-radius: 5px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
-.ficha b { font: 700 12px system-ui, sans-serif; color: var(--apoio); }
+.ficha b { font: 700 12px var(--sans); color: var(--apoio); }
 .ficha code { font: 14px var(--mono); }
 
 #leitura { position: relative; height: 120px; }
-.leitura-titulo { font: 600 16px system-ui, sans-serif; margin-bottom: 4px; }
-.leitura-texto { font: 18px/1.45 system-ui, sans-serif; }
+.leitura-titulo { font: 600 16px var(--sans); margin-bottom: 4px; }
+.leitura-texto { font: 18px/1.45 var(--sans); }
 .leitura-nota { margin-top: 6px; font-size: 16px; }
 .leitura-nota code { font: 700 16px var(--mono); padding: 1px 6px; border: 2px solid var(--borda); border-radius: 3px; background: var(--fundo); }
 .leitura-vazia { color: var(--apoio); font-style: italic; font-size: 17px; }
@@ -96,12 +111,12 @@ mark { background: var(--erro-tinta); color: inherit; border-bottom: 3px solid v
 .alinha.cabecalho { font-weight: 700; border-bottom: 2px solid #595959; }
 .alinha .indice { color: var(--apoio); text-align: right; padding-right: 14px; }
 .alinha .celula { display: inline-block; justify-self: start; padding: 1px 6px; border: 2px solid transparent; border-radius: 3px; }
-.alinha .aviso { font: 700 15px system-ui, sans-serif; color: var(--erro); margin-left: 8px; }
+.alinha .aviso { font: 700 15px var(--sans); color: var(--erro); margin-left: 8px; }
 #moldura-erro { position: absolute; left: -4px; right: -4px; height: 44px; border: 3px dashed var(--erro); border-radius: 6px; pointer-events: none; }
 
 #stdout { position: relative; margin: 0; font: 22px var(--mono); color: var(--terminal-texto); height: 40px; }
 #stdout .camada { white-space: pre; }
-#stdout .ausente { font: 16px system-ui, sans-serif; color: var(--terminal-apoio); }
+#stdout .ausente { font: 16px var(--sans); color: var(--terminal-apoio); }
 .cartao-voo.terminal-voo { font: 22px var(--mono); background: var(--terminal); color: var(--terminal-texto); border-color: #8a8d95; padding: 1px 6px; white-space: pre; }
 .cartao-voo.valor-voo { font: 16px var(--mono); padding: 1px 6px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
@@ -129,6 +144,10 @@ mark { background: var(--erro-tinta); color: inherit; border-bottom: 3px solid v
 /* "✗ não confere" não cabe ao lado do False: desce para baixo dele, dentro da mesma linha. */
 .alinha .aviso { display: block; margin: 1px 0 0 8px; font-size: 13px; line-height: 14px; }
 .cartao-voo.valor-voo { font-size: 13px; }
+
+/* Sem a caixa de narração (decisão do Bruno para as animações da Clínica); comum.js recorta o palco
+   ao fim dos painéis. */
+#narracao { display: none; }
 </style>
 <script>/*!
  * GSAP 3.15.0
@@ -201,7 +220,7 @@ mark { background: var(--erro-tinta); color: inherit; border-bottom: 3px solid v
 // texto é o dispositivo, com nome de parte ou de banco trocado por [...] e cortado com [...] quando
 // não cabe; a leitura humana é o campo `lido`. O valor extraído é igual à leitura, exceto em três
 // erros plantados, cada um num tropeço real de quem lê só a palavra: desistência homologada lida
-// como acordo, procedência em parte lida como procedência e improcedência com um pedido acessório
+// como homologação, procedência em parte lida como procedência e improcedência com um pedido acessório
 // extinto lida como extinção. Só a linha 8 cai na amostra de random_state=2026; as linhas 5 e 35
 // ficam fora, e é por elas que a concordância da amostra não é a da base.
 // tools/test-animacao-validade.py confere o texto contra o dispositivo, a leitura contra as regras e
@@ -264,6 +283,10 @@ function criarCenaValidade({base, campo, trechoDoErro, oQueSeAnota, narrarErro})
 
 
 const ValidadeClinicaCena = (() => {
+  // Os rótulos são os do Literal da primeira versão da classe da aula, a que a animação usa: nela, a
+  // opção é "homologação", e não "acordo homologado" (que é o rótulo de selecao.json e o da classe
+  // melhorada, depois da animação). A leitura humana usa os mesmos rótulos.
+  const ROTULOS = ["procedente", "parcialmente procedente", "improcedente", "extinto sem resolução do mérito", "homologação", "outro"];
   // [processo, leitura humana, texto da tela], na ordem de selecao.json["validade"].
   const SENTENCAS = [
     ["2S001VDH60000", "extinto sem resolução do mérito",
@@ -314,7 +337,7 @@ const ValidadeClinicaCena = (() => {
      "À vista do exposto, considerando que não foi dado andamento ao feito no prazo de 5 dias, com fundamento nos artigos 485, III e §1º, c/c art. 274, Parágrafo Único, ambos do Código de [...]"],
     ["2S001T22I0000", "improcedente",
      "Ante o exposto, com fundamento no art. 487, I, do CPC, JULGO IMPROCEDENTES os pedidos."],
-    ["DF00031M20000", "acordo homologado",
+    ["DF00031M20000", "homologação",
      "HOMOLOGO o acordo realizado entre as partes e, com fundamento no artigo 487, inciso III, \"a\", do Código de Processo Civil, JULGO EXTINTA a presente ação que envolve as partes acima mencionadas."],
     ["DN0002SYM0000", "improcedente",
      "Ante o exposto, JULGO IMPROCEDENTES os pedidos declinados na inicial, e, em consequência, JULGO EXTINTO o presente feito, com resolução do mérito e fundamento no artigo 487, inciso I, do Código de Processo Civil."],
@@ -348,15 +371,17 @@ const ValidadeClinicaCena = (() => {
      "Decorrido, portanto, o interregno assinalado, JULGO EXTINTO o processo, sem resolução de mérito, nos termos do artigo 485, inciso III do CPC."],
   ];
   // Linha -> resultado extraído errado.
-  const ERROS = {5: "procedente", 8: "extinto sem resolução do mérito", 35: "acordo homologado"};
+  const ERROS = {5: "procedente", 8: "extinto sem resolução do mérito", 35: "homologação"};
   const BASE = SENTENCAS.map(([processo, lido, texto], indice) => ({indice, processo, texto, resultado: ERROS[indice] ?? lido, lido}));
-  return criarCenaValidade({
+  for (const b of BASE) for (const v of [b.resultado, b.lido]) if (!ROTULOS.includes(v)) throw new Error(`linha ${b.indice}: rótulo fora da classe (${v})`);
+  const cena = criarCenaValidade({
     base: BASE,
     campo: "resultado",
     trechoDoErro: "o feito fica extinto sem resolução de mérito",
     oQueSeAnota: "o resultado que ela dá",
     narrarErro: (i, b, mostrar) => `Onde errou: a sentença ${i} julga a pretensão improcedente e só extingue sem mérito o pedido do item c. O modelo extraiu ${mostrar(b.resultado)}.`,
   });
+  return {...cena, ROTULOS};
 })();
 
 const animacao = "validade-clinica";
@@ -367,6 +392,7 @@ const campo = ValidadeClinicaCena.CAMPO;
 const trechoDoErro = ValidadeClinicaCena.TRECHO_ERRO;
 const semente = ValidadeClinicaCena.SEMENTE;
 const mostrar = ValidadeClinicaCena.mostrar;
+const rotulos = ValidadeClinicaCena.ROTULOS;
 const codigo = () => ValidadeClinicaCena.CODIGO;
 const montar = () => ValidadeClinicaCena.montar();
 
@@ -480,6 +506,12 @@ function colorirPython(linha) {
 // gsap e os plugins chegam como globais (scripts UMD), tanto no fonte quanto no dist.
 
 const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Modo embutido: o visualizador de slides, com o parâmetro moldura=slide, põe a animação só na área
+// de conteúdo de um slide comum e pede este modo com ?embutido no src do iframe (antes do #cenario).
+// A página esconde título, barra de controles e narração (comum.css, html.embutido) e ajustar()
+// recorta o palco aos painéis. Sem o parâmetro, nada muda.
+const MODO_EMBUTIDO = new URLSearchParams(location.search).has("embutido");
+if (MODO_EMBUTIDO) document.documentElement.classList.add("embutido");
 const $ = (id) => document.getElementById(id);
 const escapar = (texto) => String(texto).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -641,6 +673,7 @@ function iniciar({animacao, cenarios, rotulos, preparar, espera}) {
   function trocar(id) {
     parar();
     esmaecer(() => montar(id));
+    ajustar();
     publicar();
   }
 
@@ -673,17 +706,43 @@ function iniciar({animacao, cenarios, rotulos, preparar, espera}) {
     if (tratarTecla(e.key)) e.preventDefault();
   });
 
+  // Recorte do palco que aparece na janela, em coordenadas do palco. No modo padrão, o palco inteiro
+  // acima da barra de 56 px, como sempre foi. No embutido, a caixa que envolve os painéis, com 8 px de
+  // folga, e sem barra. Sem narração (um tema que a esconde no próprio CSS), o palco até o fim dos
+  // painéis, com a barra. O resto do palco fica cortado por clip-path, para não aparecer na sobra da
+  // janela nem por baixo da barra, que não tem fundo.
+  function recorte() {
+    const narracao = $("narracao");
+    const semNarracao = !MODO_EMBUTIDO && narracao && getComputedStyle(narracao).display === "none";
+    if (!MODO_EMBUTIDO && !semNarracao) return {x: 0, y: 0, w: 1280, h: 720, barra: 56};
+    const paineis = [...$("palco").querySelectorAll(".painel")].filter((p) => getComputedStyle(p).display !== "none");
+    if (!paineis.length) return {x: 0, y: 0, w: 1280, h: 720, barra: MODO_EMBUTIDO ? 0 : 56};
+    const fundo = Math.max(...paineis.map((p) => p.offsetTop + p.offsetHeight));
+    if (semNarracao) return {x: 0, y: 0, w: 1280, h: Math.min(720, fundo + 12), barra: 56};
+    const esq = Math.min(...paineis.map((p) => p.offsetLeft)), topo = Math.min(...paineis.map((p) => p.offsetTop));
+    const dir = Math.max(...paineis.map((p) => p.offsetLeft + p.offsetWidth));
+    const x = Math.max(0, esq - 8), y = Math.max(0, topo - 8);
+    return {x, y, w: Math.min(1280, dir + 8) - x, h: Math.min(720, fundo + 8) - y, barra: 0};
+  }
   function ajustar() {
-    const escala = Math.min(innerWidth / 1280, (innerHeight - 56) / 720);
+    const r = recorte();
+    const escala = Math.min(innerWidth / r.w, (innerHeight - r.barra) / r.h);
     const moldura = $("moldura");
     moldura.style.transform = `scale(${escala})`;
-    moldura.style.left = Math.max(0, (innerWidth - 1280 * escala) / 2) + "px";
-    moldura.style.top = Math.max(0, (innerHeight - 56 - 720 * escala) / 2) + "px";
+    moldura.style.left = Math.max(0, (innerWidth - r.w * escala) / 2) - r.x * escala + "px";
+    moldura.style.top = Math.max(0, (innerHeight - r.barra - r.h * escala) / 2) - r.y * escala + "px";
+    if (r.w < 1280 || r.h < 720) {
+      $("palco").style.clipPath = `inset(${r.y}px ${1280 - r.x - r.w}px ${720 - r.y - r.h}px ${r.x}px)`;
+      // O palco recortado passa da janela; comum.css (html.recortado) impede que a página role até lá.
+      document.documentElement.classList.add("recortado");
+    }
   }
   addEventListener("resize", ajustar);
   ajustar();
   const inicial = decodeURIComponent(location.hash.slice(1));
   montar(cenarios.includes(inicial) ? inicial : cenarios[0]);
+  // De novo depois de montar: há páginas que criam os painéis em preparar(), e o recorte depende deles.
+  ajustar();
   publicar();
   // Teclas que chegaram pela ponte antes da montagem (ponte.js), na ordem em que chegaram.
   window.tratarTecla = tratarTecla;
@@ -819,30 +878,6 @@ function preparar(id) {
 }
 
 iniciar({animacao, cenarios: cenarios.map((c) => c.id), rotulos: cenarios.map((c) => c.rotulo), preparar, espera: (s) => s.dur});
-</script>
-<!-- modo embutido do site da aula -->
-<style>
-html.embutido, html.embutido body, html.embutido #palco { background: #fff; }
-html.embutido #cabeca, html.embutido #controles, html.embutido #narracao { display: none !important; }
-</style>
-<script>
-(() => {
-  if (!new URLSearchParams(location.search).has("embutido")) return;
-  document.documentElement.classList.add("embutido");
-  // Registrado depois do ajuste original, roda por último e prevalece sobre ele.
-  const [topo, altura] = [50, 560];
-  function ajustarEmbutido() {
-    const moldura = document.getElementById("moldura");
-    if (!moldura) return;
-    const escala = Math.min(innerWidth / 1280, innerHeight / altura);
-    moldura.style.transform = `scale(${escala})`;
-    moldura.style.left = (innerWidth - 1280 * escala) / 2 + "px";
-    moldura.style.top = (innerHeight - altura * escala) / 2 - topo * escala + "px";
-  }
-  addEventListener("resize", ajustarEmbutido);
-  addEventListener("load", ajustarEmbutido);
-  ajustarEmbutido();
-})();
 </script>
 </body>
 </html>

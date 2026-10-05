@@ -52,6 +52,21 @@ html, body { margin: 0; height: 100%; background: #26282c; font-family: system-u
 #setas svg { position: absolute; inset: 0; overflow: visible; }
 .cartao-voo { position: absolute; font: 15px var(--mono); background: var(--fundo); color: var(--texto); border: 2px solid var(--borda);
   border-radius: 3px; padding: 2px 5px; overflow-wrap: anywhere; box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+
+/* Modo embutido (comum.js, MODO_EMBUTIDO): o visualizador de slides desenha título, seção e moldura
+   do slide e põe a animação só na área de conteúdo. A página esconde a própria interface e fica só o
+   palco, recortado aos painéis, em fundo branco e com a fonte de corpo do template dos slides
+   (insper.typ: Inter, depois Arial e análogas; o código continua em DejaVu Sans Mono, que é a do
+   template também). A fonte não vai embutida no arquivo: sem Inter instalada, vale a próxima da lista. */
+:root { --sans: system-ui, sans-serif; }
+html.embutido { --sans: Inter, Arial, Arimo, "Liberation Sans", Lato, sans-serif; }
+html.embutido, html.embutido body { background: #fff; font-family: var(--sans); }
+html.embutido #cabeca, html.embutido #narracao, html.embutido #controles { display: none; }
+/* Palco recortado (comum.js, ajustar): o palco passa da janela, e o documento não pode rolar até lá,
+   nem pelo fragmento do cenário, que às vezes é também o id de um elemento (#ambiente). O body corta
+   com clip, que não abre área de rolagem, e é o bloco de contenção da moldura (absoluta), para cortá-la
+   também; no html, clip valeria como hidden, que rola por âncora. */
+html.recortado body { position: relative; overflow: clip; }
 </style>
 <style>
 /* Cada campo tem cor e letra; a letra garante a leitura sem depender da cor. */
@@ -76,15 +91,15 @@ html, body { margin: 0; height: 100%; background: #26282c; font-family: system-u
 #texto-titulo { position: relative; height: 20px; }
 #texto-titulo .camada { font-size: 14px; font-weight: 600; color: var(--apoio); }
 #sentenca { position: relative; height: 104px; margin-top: 6px; }
-#sentenca .camada { font: 20px/1.65 system-ui, sans-serif; }
+#sentenca .camada { font: 20px/1.65 var(--sans); }
 #sentenca .vazio { color: var(--apoio); font-style: italic; }
 mark { position: relative; white-space: nowrap; color: inherit; background: transparent; border-radius: 3px; padding: 0 2px; border-bottom: 3px solid transparent; }
 /* A letra fica por cima do fim do trecho, fora do fluxo: escondida, ela não abre buraco no texto. */
-mark .letra { position: absolute; right: -9px; top: -11px; width: 18px; height: 18px; border-radius: 50%; color: #fff; font: 700 12px/18px system-ui, sans-serif;
+mark .letra { position: absolute; right: -9px; top: -11px; width: 18px; height: 18px; border-radius: 50%; color: #fff; font: 700 12px/18px var(--sans);
   text-align: center; }
 #legenda { position: relative; height: 120px; margin-top: 8px; border-top: 1px solid #b5b5b5; padding-top: 8px; }
 .legenda-linha { position: absolute; left: 0; right: 0; height: 32px; display: flex; align-items: center; gap: 10px; font-size: 16px; white-space: nowrap; }
-.legenda-linha .letra { flex: 0 0 24px; height: 24px; border-radius: 50%; color: #fff; font: 700 14px/24px system-ui, sans-serif; text-align: center; }
+.legenda-linha .letra { flex: 0 0 24px; height: 24px; border-radius: 50%; color: #fff; font: 700 14px/24px var(--sans); text-align: center; }
 .legenda-linha code { font: 700 15px var(--mono); flex: 0 0 170px; }
 .legenda-linha .fonte { overflow: hidden; text-overflow: ellipsis; }
 .legenda-linha .fonte i { color: var(--apoio); }
@@ -95,6 +110,8 @@ mark .letra { position: absolute; right: -9px; top: -11px; width: 18px; height: 
 .tlinha > span { padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tlinha.cabecalho { font-weight: 700; border-bottom: 2px solid #595959; }
 .tlinha .indice { color: var(--apoio); text-align: right; }
+.tlinha.cabecalho .letra { display: inline-block; width: 22px; height: 22px; margin-right: 8px; border-radius: 50%; color: #fff; font: 700 13px/22px var(--sans); text-align: center; vertical-align: 1px; }
+#realce-cabecalho { position: absolute; left: -6px; right: -6px; top: -3px; height: 46px; border: 3px solid var(--contorno); border-radius: 5px; background: transparent; pointer-events: none; }
 .celula { position: relative; }
 .celula .conteudo { display: inline-block; padding: 1px 6px; border-radius: 3px; border: 2px solid transparent; }
 .cartao-voo.valor-voo { font: 16px var(--mono); padding: 1px 6px; border-width: 2px; }
@@ -102,22 +119,41 @@ mark .letra { position: absolute; right: -9px; top: -11px; width: 18px; height: 
 </style>
 <!-- Ajustes de layout do tema: cada pasta de tema traz o seu variante.css, também quando a página é link simbólico para esta. -->
 <style>
-/* Tema da Clínica II: o modelo pydantic tem 18 linhas e as sentenças são longas. O código
-   ganha altura e largura, o texto ganha linhas, a tabela fica mais baixa (cabe o cabeçalho e três
-   linhas) e as colunas se ajustam a resultado, motivos (uma lista) e ma_fe. */
-#painel-codigo { width: 656px; height: 338px; }
-.linha-codigo { font: 14px/16px var(--mono); grid-template-columns: 2em minmax(0, 1fr); }
-#painel-texto { left: 692px; width: 568px; height: 338px; }
-#sentenca { height: 172px; }
-#sentenca .camada { font: 16px/1.45 system-ui, sans-serif; }
+/* Tema da Clínica II. A classe Decisao não vai à tela: o código é só a chamada (seis linhas), e o
+   espaço que sobra vai às sentenças, longas, e à tabela, com letra maior que a da aula 22.
+   Esquerda: o código e, embaixo dele, a legenda dos campos. Direita: a sentença da linha corrente.
+   Embaixo: a tabela, com o cabeçalho e três linhas, e colunas para resultado, motivos (uma lista) e
+   ma_fe. Sem a caixa de narração (decisão do Bruno para as animações da Clínica): comum.js recorta o
+   palco ao fim dos painéis. */
+#narracao { display: none; }
+
+#painel-codigo { left: 20px; top: 56px; width: 620px; height: 180px; }
+.linha-codigo { font: 15px/22px var(--mono); grid-template-columns: 2em minmax(0, 1fr); }
+
+#painel-texto { left: 656px; top: 56px; width: 604px; height: 320px; }
+#texto-titulo { height: 22px; }
+#texto-titulo .camada { font-size: 15px; }
+#sentenca { height: 276px; }
+#sentenca .camada { font: 20px/1.5 var(--sans); }
 /* Trecho longo quebra linha como o resto do texto. Com a quebra, a letra posicionada no canto do
    trecho cairia no fim da última linha mas na altura da primeira, sobre outra palavra; aqui ela fica
    na linha, depois do trecho, e reserva o próprio espaço mesmo escondida, para o texto não pular. */
 mark { white-space: normal; }
-mark .letra { position: static; display: inline-block; margin-left: 4px; vertical-align: 1px; }
-.legenda-linha code { flex: 0 0 96px; }
-#painel-tabela { top: 404px; height: 200px; }
-.tlinha { grid-template-columns: 60px minmax(0, 1fr) 250px 420px 96px; font-size: 15px; }
+mark .letra { position: static; display: inline-block; width: 20px; height: 20px; margin-left: 4px; vertical-align: 2px; font: 700 13px/20px var(--sans); }
+
+/* A legenda é filha do painel do texto (a página é a da aula 22), mas aqui fica na coluna da
+   esquerda, abaixo do código, com fundo de painel: posição absoluta medida a partir do painel do
+   texto (656, 56) até (20, 246) no palco. As camadas da pilha ficam dentro da folga. */
+#legenda { position: absolute; left: -636px; top: 190px; width: 620px; height: 130px; margin: 0; border-top: 0; padding: 0;
+  background: var(--painel); border-radius: 4px; }
+#legenda .camada { left: 12px; right: 12px; top: 12px; }
+.legenda-linha { font-size: 17px; }
+.legenda-linha .letra { flex: 0 0 26px; height: 26px; font: 700 15px/26px var(--sans); }
+.legenda-linha code { font: 700 16px var(--mono); flex: 0 0 104px; }
+
+#painel-tabela { left: 20px; top: 388px; width: 1240px; height: 200px; }
+.tlinha { grid-template-columns: 60px minmax(0, 1fr) 280px 492px 108px; font-size: 17px; }
+.cartao-voo.valor-voo { font-size: 17px; }
 </style>
 <script>/*!
  * GSAP 3.15.0
@@ -185,14 +221,15 @@ mark .letra { position: static; display: inline-block; margin-left: 4px; vertica
 <script type="module">// ---- ./estados.js ----
 // Clínica II, aula de LLM: extração com dataframeit sobre sentenças reais da base da
 // clínica. A página é a da aula 22 de CDAD-1 (link simbólico para ../extracao/pagina.html); este
-// módulo traz os dados, o código e a narração, e variante.css ajusta o layout ao código mais longo.
+// módulo traz os dados, o código e a narração, e variante.css refaz o layout: sem a classe na tela,
+// o código é só a chamada, e as sentenças e a tabela ganham espaço e letra maior.
 //
 // As três sentenças são trechos literais da base, com [...] onde houve corte, sem nome de parte nem
 // de banco. Sem chave de API, a tela não mostra uma resposta real do modelo: mostra valores que a
-// suíte tools/test-animacao-extracao.py confere, como no tema da aula 22. Ela roda o código da tela
-// com o dataframeit instalado (só a chamada ao modelo é trocada por uma que devolve estes valores),
-// exige que cada linha seja uma instância válida do modelo pydantic mostrado, que cada valor saia
-// do trecho destacado, e que a chamada use só parâmetros que existem na assinatura de dataframeit().
+// suíte tools/test-animacao-extracao.py confere, como no tema da aula 22. Ela roda PREAMBULO (fora
+// da tela) e CODIGO (a tela) com o dataframeit instalado, trocando só a chamada ao modelo por uma que
+// devolve estes valores, e exige que cada linha seja uma instância válida da classe, que cada valor
+// saia do trecho destacado e que a chamada use só parâmetros que existem em dataframeit().
 const ExtracaoClinicaCena = (() => {
   // `trechos` diz de onde sai cada valor; null quando o texto não tem o dado, e aí a legenda mostra
   // o texto de SEM_TRECHO. `processo` identifica a sentença na base e não aparece na tela.
@@ -221,33 +258,48 @@ const ExtracaoClinicaCena = (() => {
   const COLUNAS = ["resultado", "motivos", "ma_fe"];
   const LETRAS = {resultado: "A", motivos: "B", ma_fe: "C"};
   const SEM_TRECHO = {motivos: "nenhum motivo da lista no texto", ma_fe: "o texto não condena por má-fé"};
-  // As linhas do Literal estão quebradas para caber no painel; é o mesmo programa que a suíte roda.
-  const CODIGO = [
+  // O código que roda inteiro, na ordem: PREAMBULO (os imports e a classe Decisao dos slides
+  // "Descrever o que coletar" e "Motivos e má-fé na mesma classe" do deck, com as linhas quebradas
+  // como lá) e depois CODIGO, que é o que a tela mostra. A classe não vai à tela, para sobrar espaço
+  // às sentenças e à tabela; os comentários de CODIGO dizem o que são sentencas e Decisao, e a
+  // suíte roda PREAMBULO + CODIGO com a biblioteca real.
+  const PREAMBULO = [
     "from typing import Literal",
-    "from pydantic import BaseModel",
+    "from pydantic import BaseModel, Field",
     "from dataframeit import dataframeit",
     "",
     "class Decisao(BaseModel):",
     "    resultado: Literal[",
-    '        "procedente", "parcialmente procedente", "improcedente",',
-    '        "extinto sem resolução do mérito", "acordo homologado", "outro"]',
+    '        "procedente", "parcialmente procedente",',
+    '        "improcedente", "extinto sem resolução do mérito",',
+    '        "homologação", "outro"] = Field(',
+    '        description="O resultado da sentença.")',
     "    motivos: list[Literal[",
     '        "contratação comprovada", "encargos sem abusividade",',
     '        "golpe por culpa da vítima ou de terceiro",',
-    '        "falta de prova mínima", "prescrição ou decadência", "outro"]]',
-    "    ma_fe: bool",
+    '        "falta de prova mínima", "prescrição ou decadência",',
+    '        "outro"]] = Field(description="Por que o pedido "',
+    '                          "foi negado.")',
+    '    ma_fe: bool = Field(description="A sentença fala em "',
+    '                        "litigância de má-fé?")',
     "",
-    '# sentencas: um DataFrame com a coluna "decisao"',
+  ];
+  const CODIGO = [
+    "# sentencas: o DataFrame da base, uma linha por sentença",
+    "# Decisao: a classe com resultado, motivos e ma_fe",
     "tabela = dataframeit(sentencas, Decisao,",
     '                     "Classifique a sentença: {texto}",',
-    '                     provider="groq", text_column="decisao")',
+    '                     provider="groq", text_column="decisao",',
+    '                     model="openai/gpt-oss-120b")',
   ];
   const faixa = (inicio, fim) => ({de: CODIGO.findIndex((l) => l.startsWith(inicio)) + 1, ate: CODIGO.findIndex((l) => l.startsWith(fim)) + 1});
-  const FAIXAS = {classe: faixa("class Decisao", "    ma_fe"), chamada: faixa("tabela = ", '                     provider=')};
+  // Só a chamada tem faixa no código: o passo das colunas contorna o cabeçalho da tabela
+  // (realceCabecalho), onde cada coluna traz a letra do campo.
+  const FAIXAS = {chamada: faixa("tabela = ", '                     model=')};
 
   function montar() {
     const estados = [];
-    let s = {foco: null, atual: null, destaques: [], tabela: [], colunas: false, narr: ""};
+    let s = {foco: null, atual: null, destaques: [], tabela: [], colunas: false, realceCabecalho: false, narr: ""};
     const add = (m, dur = 2800) => { s = {...s, ...m}; estados.push(JSON.parse(JSON.stringify({...s, dur}))); };
     const comLinha = (i, campos) => {
       const tabela = s.tabela.map((l) => ({...l}));
@@ -259,9 +311,9 @@ const ExtracaoClinicaCena = (() => {
     const ate = (i, n) => COLUNAS.slice(0, n).map((c) => destaque(i, c));
 
     add({narr: "Aperte espaço para tocar. Setas avançam e voltam um passo."}, 1200);
-    add({foco: "classe", colunas: true,
-      narr: "O modelo pydantic define as colunas. resultado e cada item de motivos só aceitam os valores da lista; ma_fe é True ou False."}, 3800);
-    add({foco: "chamada", narr: "Uma chamada processa a tabela inteira. Em cada linha, a coluna decisao entra no lugar de {texto} no prompt."}, 3400);
+    add({colunas: true, realceCabecalho: true,
+      narr: "A classe Decisao define as colunas. resultado e cada item de motivos só aceitam os valores da lista; ma_fe é True ou False."}, 3800);
+    add({foco: "chamada", realceCabecalho: false, narr: "Uma chamada processa a tabela inteira. Em cada linha, a coluna decisao entra no lugar de {texto} no prompt."}, 3400);
 
     add({atual: 0, destaques: [], tabela: comLinha(0, []), narr: "Linha 0: esta sentença vai ao modelo, junto com o prompt e as regras da classe Decisao."}, 3000);
     add({destaques: ate(0, 1), tabela: comLinha(0, ["resultado"]),
@@ -284,7 +336,7 @@ const ExtracaoClinicaCena = (() => {
     add({atual: null, destaques: [], narr: "Três textos, três linhas, cada valor com o trecho que o sustenta. Uma coluna preenchida ainda não prova que o valor está certo."}, 4200);
     return estados;
   }
-  return {DECISOES, COLUNAS, LETRAS, SEM_TRECHO, CODIGO, FAIXAS, montar};
+  return {DECISOES, COLUNAS, LETRAS, SEM_TRECHO, PREAMBULO, CODIGO, FAIXAS, montar};
 })();
 
 const animacao = "extracao-clinica";
@@ -297,6 +349,9 @@ const faixas = ExtracaoClinicaCena.FAIXAS;
 const semTrecho = ExtracaoClinicaCena.SEM_TRECHO;
 const nomeDaTabela = "sentencas";
 const colunaDoTexto = "decisao";
+const letrasNoCabecalho = true;
+// Código que roda antes do da tela e não aparece nela (a página não importa; só a suíte lê).
+const preambulo = ExtracaoClinicaCena.PREAMBULO;
 const codigo = () => ExtracaoClinicaCena.CODIGO;
 const montar = () => ExtracaoClinicaCena.montar();
 
@@ -410,6 +465,12 @@ function colorirPython(linha) {
 // gsap e os plugins chegam como globais (scripts UMD), tanto no fonte quanto no dist.
 
 const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Modo embutido: o visualizador de slides, com o parâmetro moldura=slide, põe a animação só na área
+// de conteúdo de um slide comum e pede este modo com ?embutido no src do iframe (antes do #cenario).
+// A página esconde título, barra de controles e narração (comum.css, html.embutido) e ajustar()
+// recorta o palco aos painéis. Sem o parâmetro, nada muda.
+const MODO_EMBUTIDO = new URLSearchParams(location.search).has("embutido");
+if (MODO_EMBUTIDO) document.documentElement.classList.add("embutido");
 const $ = (id) => document.getElementById(id);
 const escapar = (texto) => String(texto).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -571,6 +632,7 @@ function iniciar({animacao, cenarios, rotulos, preparar, espera}) {
   function trocar(id) {
     parar();
     esmaecer(() => montar(id));
+    ajustar();
     publicar();
   }
 
@@ -603,17 +665,43 @@ function iniciar({animacao, cenarios, rotulos, preparar, espera}) {
     if (tratarTecla(e.key)) e.preventDefault();
   });
 
+  // Recorte do palco que aparece na janela, em coordenadas do palco. No modo padrão, o palco inteiro
+  // acima da barra de 56 px, como sempre foi. No embutido, a caixa que envolve os painéis, com 8 px de
+  // folga, e sem barra. Sem narração (um tema que a esconde no próprio CSS), o palco até o fim dos
+  // painéis, com a barra. O resto do palco fica cortado por clip-path, para não aparecer na sobra da
+  // janela nem por baixo da barra, que não tem fundo.
+  function recorte() {
+    const narracao = $("narracao");
+    const semNarracao = !MODO_EMBUTIDO && narracao && getComputedStyle(narracao).display === "none";
+    if (!MODO_EMBUTIDO && !semNarracao) return {x: 0, y: 0, w: 1280, h: 720, barra: 56};
+    const paineis = [...$("palco").querySelectorAll(".painel")].filter((p) => getComputedStyle(p).display !== "none");
+    if (!paineis.length) return {x: 0, y: 0, w: 1280, h: 720, barra: MODO_EMBUTIDO ? 0 : 56};
+    const fundo = Math.max(...paineis.map((p) => p.offsetTop + p.offsetHeight));
+    if (semNarracao) return {x: 0, y: 0, w: 1280, h: Math.min(720, fundo + 12), barra: 56};
+    const esq = Math.min(...paineis.map((p) => p.offsetLeft)), topo = Math.min(...paineis.map((p) => p.offsetTop));
+    const dir = Math.max(...paineis.map((p) => p.offsetLeft + p.offsetWidth));
+    const x = Math.max(0, esq - 8), y = Math.max(0, topo - 8);
+    return {x, y, w: Math.min(1280, dir + 8) - x, h: Math.min(720, fundo + 8) - y, barra: 0};
+  }
   function ajustar() {
-    const escala = Math.min(innerWidth / 1280, (innerHeight - 56) / 720);
+    const r = recorte();
+    const escala = Math.min(innerWidth / r.w, (innerHeight - r.barra) / r.h);
     const moldura = $("moldura");
     moldura.style.transform = `scale(${escala})`;
-    moldura.style.left = Math.max(0, (innerWidth - 1280 * escala) / 2) + "px";
-    moldura.style.top = Math.max(0, (innerHeight - 56 - 720 * escala) / 2) + "px";
+    moldura.style.left = Math.max(0, (innerWidth - r.w * escala) / 2) - r.x * escala + "px";
+    moldura.style.top = Math.max(0, (innerHeight - r.barra - r.h * escala) / 2) - r.y * escala + "px";
+    if (r.w < 1280 || r.h < 720) {
+      $("palco").style.clipPath = `inset(${r.y}px ${1280 - r.x - r.w}px ${720 - r.y - r.h}px ${r.x}px)`;
+      // O palco recortado passa da janela; comum.css (html.recortado) impede que a página role até lá.
+      document.documentElement.classList.add("recortado");
+    }
   }
   addEventListener("resize", ajustar);
   ajustar();
   const inicial = decodeURIComponent(location.hash.slice(1));
   montar(cenarios.includes(inicial) ? inicial : cenarios[0]);
+  // De novo depois de montar: há páginas que criam os painéis em preparar(), e o recorte depende deles.
+  ajustar();
   publicar();
   // Teclas que chegaram pela ponte antes da montagem (ponte.js), na ordem em que chegaram.
   window.tratarTecla = tratarTecla;
@@ -677,7 +765,13 @@ function preparar(id) {
   const legendaDe = (i, c) => legendas.noPasso(primeiroPasso(i)).querySelector(`.legenda-linha[data-campo="${c}"]`);
 
   // Tabela: o cabeçalho e as linhas finais, escondidos até o passo em que entram.
-  const cab = $("tabela").appendChild(criarEl("div", "tlinha cabecalho", `<span></span><span>${colunaDoTexto}</span>${colunas.map((c) => `<span>${c}</span>`).join("")}`));
+  // Com letrasNoCabecalho, cada coluna de campo traz a letra do campo, a mesma da legenda e do trecho.
+  const letraDe = (c) => letrasNoCabecalho ? `<span class="letra" style="background:${COR[letras[c]]}">${letras[c]}</span>` : "";
+  const cab = $("tabela").appendChild(criarEl("div", "tlinha cabecalho", `<span></span><span>${colunaDoTexto}</span>${colunas.map((c) => `<span>${letraDe(c)}${c}</span>`).join("")}`));
+  // Contorno do cabeçalho, para o passo que apresenta as colunas sem mostrar a classe no código
+  // (estado com realceCabecalho). Só existe no tema que usa.
+  const realce = estados.some((s) => s.realceCabecalho) ? $("tabela").appendChild(criarEl("div", null)) : null;
+  if (realce) realce.id = "realce-cabecalho";
   const linhasTabela = final.tabela.map((l, k) => {
     const el = $("tabela").appendChild(criarEl("div", "tlinha",
       `<span class="indice">${l.indice}</span><span>${escapar(decisoes[l.indice].texto)}</span>` +
@@ -705,6 +799,7 @@ function preparar(id) {
 
   // Passo 0.
   gsap.set([foco, cab, ...linhasTabela], {autoAlpha: 0});
+  if (realce) gsap.set(realce, {autoAlpha: 0});
   for (const l of final.tabela) for (const c of colunas) gsap.set(celula(l.indice, c), {autoAlpha: 0});
   const marcas = [...$("sentenca").querySelectorAll("mark")];
   gsap.set(marcas, {backgroundColor: "rgba(255,255,255,0)", borderBottomColor: "rgba(0,0,0,0)"});
@@ -727,6 +822,7 @@ function preparar(id) {
     if (s.foco && !a.foco) { tl.set(foco, posFaixa(s.foco), t); fade(foco, 1, t); }
     else if (s.foco !== a.foco) tl.to(foco, {...posFaixa(s.foco), duration: DUR.marcador, ease: CURVA}, t);
     if (s.colunas && !a.colunas) fade(cab, 1, t);
+    if (realce && Boolean(s.realceCabecalho) !== Boolean(a.realceCabecalho)) fade(realce, s.realceCabecalho ? 1 : 0, t, DUR.marcador);
     // A linha da tabela entra de baixo com fade, com o índice e o texto; os campos chegam depois.
     for (const l of s.tabela) if (!a.tabela.some((x) => x.indice === l.indice)) {
       const el = linhasTabela[final.tabela.findIndex((x) => x.indice === l.indice)];
@@ -760,30 +856,6 @@ function preparar(id) {
 }
 
 iniciar({animacao, cenarios: cenarios.map((c) => c.id), rotulos: cenarios.map((c) => c.rotulo), preparar, espera: (s) => s.dur});
-</script>
-<!-- modo embutido do site da aula -->
-<style>
-html.embutido, html.embutido body, html.embutido #palco { background: #fff; }
-html.embutido #cabeca, html.embutido #controles, html.embutido #narracao { display: none !important; }
-</style>
-<script>
-(() => {
-  if (!new URLSearchParams(location.search).has("embutido")) return;
-  document.documentElement.classList.add("embutido");
-  // Registrado depois do ajuste original, roda por último e prevalece sobre ele.
-  const [topo, altura] = [50, 560];
-  function ajustarEmbutido() {
-    const moldura = document.getElementById("moldura");
-    if (!moldura) return;
-    const escala = Math.min(innerWidth / 1280, innerHeight / altura);
-    moldura.style.transform = `scale(${escala})`;
-    moldura.style.left = (innerWidth - 1280 * escala) / 2 + "px";
-    moldura.style.top = (innerHeight - altura * escala) / 2 - topo * escala + "px";
-  }
-  addEventListener("resize", ajustarEmbutido);
-  addEventListener("load", ajustarEmbutido);
-  ajustarEmbutido();
-})();
 </script>
 </body>
 </html>
